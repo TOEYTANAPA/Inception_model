@@ -12,7 +12,7 @@ import tensorflow as tf
 import os
 import time
 from tensorflow.examples.tutorials.mnist import input_data
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 # get_ipython().run_line_magic('matplotlib', 'inline')
 
 
@@ -55,6 +55,7 @@ import matplotlib.pyplot as plt
 
 # In[13]:
 
+mnist = input_data.read_data_sets('MNIST_data', one_hot=True)
 
 trainX = np.reshape(mnist.train.images, (-1, 28, 28, 1))
 train_lb = mnist.train.labels
@@ -91,8 +92,8 @@ print("--- %s seconds ---" % (time.time() - start_time))
 start_time = time.time()
 
 #make sure the images are alright
-plt.imshow(trainX.reshape(len(trainX),28,28)[0],cmap="Greys")
-print("--- %s seconds ---" % (time.time() - start_time))
+# plt.imshow(trainX.reshape(len(trainX),28,28)[0],cmap="Greys")
+# print("--- %s seconds ---" % (time.time() - start_time))
 
 
 # In[17]:
@@ -132,7 +133,7 @@ print("--- %s seconds ---" % (time.time() - start_time))
 
 
 #use os to get our current working directory so we can save variable
-file_path = os.getcwd()+'/model.ckpt'
+# file_path = os.getcwd()+'/model.ckpt'
 
 
 # In[20]:
