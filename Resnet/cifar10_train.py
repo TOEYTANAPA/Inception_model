@@ -2,13 +2,14 @@
 # Github: https://github.com/wenxinxu/resnet_in_tensorflow
 # ==============================================================================
 
-from resnet import *
+from resnet_v2 import *
 from datetime import datetime
 import time
 from cifar10_input import *
 import pandas as pd
 
 
+FLAGS = None
 
 class Train(object):
     '''

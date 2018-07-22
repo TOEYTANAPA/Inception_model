@@ -12,50 +12,22 @@ import tensorflow as tf
 import os
 import time
 from tensorflow.examples.tutorials.mnist import input_data
-# import matplotlib.pyplot as plt
-# get_ipython().run_line_magic('matplotlib', 'inline')
+line = "======================================================================"
+
+parameter_servers = ["localhost:2222"]
+workers = ["localhost:2223","localhost:2224","localhost:2225"]
+cluster = tf.train.ClusterSpec({"ps": parameter_servers, "worker":workers})
+tf.app.flags.DEFINE_string("job_name", "", "'ps' / 'worker'")
+tf.app.flags.DEFINE_integer("task_index", 0, "Index of task")
+FLAGS = tf.app.flags.FLAGS
+server = tf.train.Server(cluster,job_name=FLAGS.job_name,task_index=FLAGS.task_index, protocol='grpc+gdr')
 
 
-# In[11]:
-
-
-# def convert(imgf, labelf, outf, n):
-#     f = open(imgf, "rb")
-#     o = open(outf, "w")
-#     l = open(labelf, "rb")
-
-#     f.read(16)
-#     l.read(8)
-#     images = []
-
-#     for i in range(n):
-#         image = [ord(l.read(1))]
-#         for j in range(28*28):
-#             image.append(ord(f.read(1)))
-#         images.append(image)
-
-#     for image in images:
-#         o.write(",".join(str(pix) for pix in image)+"\n")
-#     f.close()
-#     o.close()
-#     l.close()
-
-
-# In[12]:
-
-
-# convert("train-images-idx3-ubyte", "train-labels-idx1-ubyte","mnist_train.csv", 60000)
-# convert("t10k-images-idx3-ubyte", "t10k-labels-idx1-ubyte","mnist_test.csv", 10000)
-
-
-# # Data and preprocessing and miscellaneous functions
-
-# use mnist_train.csv as our training data and mnist_test.csv as our validation set
-# http://pjreddie.com/projects/mnist-in-csv/
-
-# In[13]:
-
+start_time = time.time()
 mnist = input_data.read_data_sets('MNIST_data', one_hot=True)
+print("--- read_data: %s seconds ---" % (time.time() - start_time))
+print(line)
+
 
 trainX = np.reshape(mnist.train.images, (-1, 28, 28, 1))
 train_lb = mnist.train.labels
@@ -63,43 +35,31 @@ testX = np.reshape(mnist.test.images, (-1, 28, 28, 1))
 test_lb = mnist.test.labels
 
 
-# In[14]:
-
-
 start_time = time.time()
-
 #reformat the data so it's not flat
 trainX=trainX.reshape(len(trainX),28,28,1)
 testX = testX.reshape(len(testX),28,28,1)
 print("--- %s seconds ---" % (time.time() - start_time))
-# new_df.loc[len(new_df)] = ["reformat the data",(time.time() - start_time)]
-
-
-# In[15]:
+print(line)
 
 
 start_time = time.time()
-
 #get a validation set and remove it from the train set
 trainX,valX,train_lb,val_lb=trainX[0:(len(trainX)-500),:,:,:],trainX[(len(trainX)-500):len(trainX),:,:,:],                            train_lb[0:(len(trainX)-500),:],train_lb[(len(trainX)-500):len(trainX),:]
 print("--- %s seconds ---" % (time.time() - start_time))
-# new_df.loc[len(new_df)] = ["get a validation",(time.time() - start_time)]
+print(line)
 
 
-# In[16]:
 
-
-start_time = time.time()
+# start_time = time.time()
 
 #make sure the images are alright
 # plt.imshow(trainX.reshape(len(trainX),28,28)[0],cmap="Greys")
 # print("--- %s seconds ---" % (time.time() - start_time))
 
 
-# In[17]:
 
-
-start_time = time.time()
+# start_time = time.time()
 
 #need to batch the test data because running low on memory
 class test_batchs:
@@ -115,18 +75,18 @@ class test_batchs:
 
 #set the test batchsize
 test_batch_size = 100
-print("--- %s seconds ---" % (time.time() - start_time))
+# print("--- %s seconds ---" % (time.time() - start_time))
 
 
 # In[18]:
 
 
-start_time = time.time()
+# start_time = time.time()
 
 #returns accuracy of model
 def accuracy(target,predictions):
     return(100.0*np.sum(np.argmax(target,1) == np.argmax(predictions,1))/target.shape[0])
-print("--- %s seconds ---" % (time.time() - start_time))
+# print("--- %s seconds ---" % (time.time() - start_time))
 
 
 # In[19]:
@@ -146,6 +106,11 @@ print("--- %s seconds ---" % (time.time() - start_time))
 
 # In[23]:
 
+
+if FLAGS.job_name == "ps":
+  server.join()
+elif FLAGS.job_name == "worker":
+  with tf.device(tf.train.replica_device_setter(worker_device="/job:worker/task:%d" % FLAGS.task_index,cluster=cluster)):global_step = tf.get_variable('global_step', [],initializer=tf.constant_initializer(0),trainable=False)
 
 
 
