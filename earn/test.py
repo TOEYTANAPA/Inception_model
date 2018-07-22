@@ -85,11 +85,9 @@ graph = tf.Graph()
 with graph.as_default():
 
     if FLAGS.job_name == "ps":
-      server.join()
+        server.join()
     elif FLAGS.job_name == "worker":
         with tf.device(tf.train.replica_device_setter(worker_device="/job:worker/task:%d" % FLAGS.task_index,cluster=cluster)):global_step = tf.get_variable('global_step', [],initializer=tf.constant_initializer(0),trainable=False)
-
-            #train data and labels
             X = tf.placeholder(tf.float32,shape=(batch_size,28,28,1))
             y_ = tf.placeholder(tf.float32,shape=(batch_size,10))
 
