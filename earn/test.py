@@ -7,8 +7,8 @@ from tensorflow.examples.tutorials.mnist import input_data
 line = "======================================================================"
 
 
-parameter_servers = ["localhost:2222"]
-workers = ["localhost:2223","localhost:2224","localhost:2225"]
+parameter_servers = ["192.168.148.12:2222"]
+workers = ["192.168.148.12:2223","192.168.148.12:2224","192.168.148.12:2225"]
 cluster = tf.train.ClusterSpec({"ps": parameter_servers, "worker":workers})
 tf.app.flags.DEFINE_string("job_name", "", "'ps' / 'worker'")
 tf.app.flags.DEFINE_integer("task_index", 0, "Index of task")
