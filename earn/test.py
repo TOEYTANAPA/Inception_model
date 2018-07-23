@@ -338,9 +338,9 @@ elif FLAGS.job_name == "worker":
                 print("Model initialized.")
 
                 #use the previous model or don't and initialize variables
-                if use_previous:
-                    saver.restore(sess,file_path)
-                    print("Model restored.")
+                # if use_previous:
+                #     saver.restore(sess,file_path)
+                #     print("Model restored.")
 
                 #training
                 for s in range(num_steps):
@@ -385,8 +385,8 @@ elif FLAGS.job_name == "worker":
 
                         print ("test accuracy: "+str(accuracy(test_lb,result)))
 
-                        save_path = saver.save(sess,file_path)
-                        print("Model saved.")
+                        # save_path = saver.save(sess,file_path)
+                        # print("Model saved.")
             sess.close()       
 
         sv.stop() 
