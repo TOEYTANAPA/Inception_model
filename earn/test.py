@@ -326,10 +326,19 @@ elif FLAGS.job_name == "worker":
     # config.gpu_options.allow_growth = True #allocate dynamically
     # sess = tf.Session(config = config)
 
-    sv = tf.train.Supervisor(is_chief=(FLAGS.task_index == 0), logdir=LOG_DIR,global_step=global_step,init_op=init_op) 
-    with sv.managed_session(server.target) as sess:
-        step = 0 
-        while not sv.should_stop() and step <= TRAINING_STEPS: 
+    # sv = tf.train.Supervisor(is_chief=(FLAGS.task_index == 0), logdir=LOG_DIR,global_step=global_step,init_op=init_op) 
+    # with sv.managed_session(server.target) as sess:
+    #     step = 0 
+    #     while not sv.should_stop() and step <= TRAINING_STEPS: 
+
+    hooks=[tf.train.StopAtStepHook(last_step=100000)]
+
+    with tf.train.MonitoredTrainingSession(master=server.target,
+        is_chief=(FLAGS.task_index == 0),
+        checkpoint_dir=LOG_DIR,
+        hooks = hooks) as sess:
+
+        while not sess.should_stop():        
             print(line)
             print("--- about_GPU_time:  %s seconds ---" % (time.time() - start_time))
             print(line)
