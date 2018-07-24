@@ -297,6 +297,8 @@ elif FLAGS.job_name == "worker":
 
             #initialize variable
             init = tf.initialize_all_variables()
+            init_op = tf.global_variables_initializer()
+
 
             #use to save variables so we can pick up later
             saver = tf.train.Saver()
@@ -324,7 +326,7 @@ elif FLAGS.job_name == "worker":
     # config.gpu_options.allow_growth = True #allocate dynamically
     # sess = tf.Session(config = config)
 
-    sv = tf.train.Supervisor(is_chief=(FLAGS.task_index == 0), logdir=LOG_DIR,global_step=global_step,init_op=init) 
+    sv = tf.train.Supervisor(is_chief=(FLAGS.task_index == 0), logdir=LOG_DIR,global_step=global_step,init_op=init_op) 
     with sv.managed_session(server.target) as sess:
         step = 0 
         while not sv.should_stop() and step <= TRAINING_STEPS: 
