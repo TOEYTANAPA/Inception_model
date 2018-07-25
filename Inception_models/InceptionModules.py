@@ -249,32 +249,77 @@ with graph.as_default():
 
     def model(x,train=True):
         #Inception Module 1
+        
+        start_time = time.time()
         conv1_1x1_1 = conv2d_s1(x,W_conv1_1x1_1)+b_conv1_1x1_1
+#         new_df.loc[len(new_df)] = ['conv1_1x1_1',(time.time() - start_time)]
+        
+        start_time = time.time()
         conv1_1x1_2 = tf.nn.relu(conv2d_s1(x,W_conv1_1x1_2)+b_conv1_1x1_2)
+#         new_df.loc[len(new_df)] = ['conv1_1x1_2',(time.time() - start_time)]
+        
+        start_time = time.time()
         conv1_1x1_3 = tf.nn.relu(conv2d_s1(x,W_conv1_1x1_3)+b_conv1_1x1_3)
+#         new_df.loc[len(new_df)] = ['conv1_1x1_3' ,(time.time() - start_time)]
+        
+        start_time = time.time()
         conv1_3x3 = conv2d_s1(conv1_1x1_2,W_conv1_3x3)+b_conv1_3x3
+#         new_df.loc[len(new_df)] = ['conv1_3x3' ,(time.time() - start_time)]
+        
+        start_time = time.time()
         conv1_5x5 = conv2d_s1(conv1_1x1_3,W_conv1_5x5)+b_conv1_5x5
+#         new_df.loc[len(new_df)] = ['conv1_5x5' ,(time.time() - start_time)]
+        
+        start_time = time.time()
         maxpool1 = max_pool_3x3_s1(x)
+#         new_df.loc[len(new_df)] = ['maxpool1' ,(time.time() - start_time)]
+        
+        start_time = time.time()
         conv1_1x1_4 = conv2d_s1(maxpool1,W_conv1_1x1_4)+b_conv1_1x1_4
+#         new_df.loc[len(new_df)] = ['conv1_1x1_4' ,(time.time() - start_time)]
         
         #concatenate all the feature maps and hit them with a relu
-        inception1 = tf.nn.relu(tf.concat(3,[conv1_1x1_1,conv1_3x3,conv1_5x5,conv1_1x1_4]))
+        inception1 = tf.nn.relu(tf.concat([conv1_1x1_1,conv1_3x3,conv1_5x5,conv1_1x1_4],3))
 
         
         #Inception Module 2
+        start_time = time.time()
         conv2_1x1_1 = conv2d_s1(inception1,W_conv2_1x1_1)+b_conv2_1x1_1
+#         new_df.loc[len(new_df)] = ['conv2_1x1_1' ,(time.time() - start_time)]
+        
+        start_time = time.time()
         conv2_1x1_2 = tf.nn.relu(conv2d_s1(inception1,W_conv2_1x1_2)+b_conv2_1x1_2)
+#         new_df.loc[len(new_df)] = ['conv2_1x1_2' ,(time.time() - start_time)]
+        
+        start_time = time.time()
         conv2_1x1_3 = tf.nn.relu(conv2d_s1(inception1,W_conv2_1x1_3)+b_conv2_1x1_3)
+#         new_df.loc[len(new_df)] = ['conv2_1x1_3' ,(time.time() - start_time)]
+        
+        start_time = time.time()
         conv2_3x3 = conv2d_s1(conv2_1x1_2,W_conv2_3x3)+b_conv2_3x3
+#         new_df.loc[len(new_df)] = ['conv2_3x3' ,(time.time() - start_time)]
+        
+        start_time = time.time()
         conv2_5x5 = conv2d_s1(conv2_1x1_3,W_conv2_5x5)+b_conv2_5x5
+#         new_df.loc[len(new_df)] = ['conv2_5x5' ,(time.time() - start_time)]
+        
+        start_time = time.time()
         maxpool2 = max_pool_3x3_s1(inception1)
+#         new_df.loc[len(new_df)] = ['maxpool2' ,(time.time() - start_time)]
+        
+        start_time = time.time()
         conv2_1x1_4 = conv2d_s1(maxpool2,W_conv2_1x1_4)+b_conv2_1x1_4
+#         new_df.loc[len(new_df)] = ['conv2_1x1_4' ,(time.time() - start_time)]
         
         #concatenate all the feature maps and hit them with a relu
-        inception2 = tf.nn.relu(tf.concat(3,[conv2_1x1_1,conv2_3x3,conv2_5x5,conv2_1x1_4]))
+        start_time = time.time()
+        inception2 = tf.nn.relu(tf.concat([conv2_1x1_1,conv2_3x3,conv2_5x5,conv2_1x1_4],3))
+#         new_df.loc[len(new_df)] = ['inception2' ,(time.time() - start_time)]
 
         #flatten features for fully connected layer
+        start_time = time.time()
         inception2_flat = tf.reshape(inception2,[-1,28*28*4*map2])
+#         new_df.loc[len(new_df)] = ['inception2_flat' ,(time.time() - start_time)]
         
         #Fully connected layers
         if train:
@@ -284,7 +329,7 @@ with graph.as_default():
 
         return tf.matmul(h_fc1,W_fc2)+b_fc2
     
-    
+#     tf.nn.softmax_cross_entropy_with_logits(logits = yPredbyNN, labels=Y)
     loss = tf.reduce_mean(
         tf.nn.softmax_cross_entropy_with_logits(logits=model(X),labels=y_))
     opt = tf.train.AdamOptimizer(1e-4).minimize(loss)
@@ -297,7 +342,6 @@ with graph.as_default():
     
     #use to save variables so we can pick up later
     saver = tf.train.Saver()
-# In[22]:
 
 
 num_steps = 20000
