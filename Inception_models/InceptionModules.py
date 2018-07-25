@@ -286,7 +286,7 @@ with graph.as_default():
     
     
     loss = tf.reduce_mean(
-        tf.nn.softmax_cross_entropy_with_logits(model(X),y_))
+        tf.nn.softmax_cross_entropy_with_logits(logits=model(X),labels=y_))
     opt = tf.train.AdamOptimizer(1e-4).minimize(loss)
     
     predictions_val = tf.nn.softmax(model(tf_valX,train=False))
