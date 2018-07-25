@@ -306,39 +306,39 @@ elif FLAGS.job_name == "worker":
 
     #set use_previous=1 to use file_path model
     #set use_previous=0 to start model from scratch
-    use_previous = 0
+        use_previous = 0
 
 
-    BATCH_SIZE = 50 
+        BATCH_SIZE = 50 
 
-    TRAINING_STEPS = 20000 
+        TRAINING_STEPS = 20000 
 
-    PRINT_EVERY = 100 
+        PRINT_EVERY = 100 
 
-    LOG_DIR = "/tmp/log"
-# with tf.device('/device:GPU:1'):
-#     num_steps = 20000
+        LOG_DIR = "/tmp/log"
+    # with tf.device('/device:GPU:1'):
+    #     num_steps = 20000
 
-    # start_time = time.time()
-    # config=tf.ConfigProto(log_device_placement=True)
-    # # maximun alloc gpu 10% of MEM
-    # config.gpu_options.per_process_gpu_memory_fraction = 0.1
-    # config.gpu_options.allow_growth = True #allocate dynamically
-    # sess = tf.Session(config = config)
+        # start_time = time.time()
+        # config=tf.ConfigProto(log_device_placement=True)
+        # # maximun alloc gpu 10% of MEM
+        # config.gpu_options.per_process_gpu_memory_fraction = 0.1
+        # config.gpu_options.allow_growth = True #allocate dynamically
+        # sess = tf.Session(config = config)
 
-    # sv = tf.train.Supervisor(is_chief=(FLAGS.task_index == 0), logdir=LOG_DIR,global_step=global_step,init_op=init_op) 
-    # with sv.managed_session(server.target) as sess:
-    #     step = 0 
-    #     while not sv.should_stop() and step <= TRAINING_STEPS: 
+        # sv = tf.train.Supervisor(is_chief=(FLAGS.task_index == 0), logdir=LOG_DIR,global_step=global_step,init_op=init_op) 
+        # with sv.managed_session(server.target) as sess:
+        #     step = 0 
+        #     while not sv.should_stop() and step <= TRAINING_STEPS: 
 
-    hooks=[tf.train.StopAtStepHook(last_step=100000)]
+        # hooks=[tf.train.StopAtStepHook(last_step=100000)]
 
-    with tf.train.MonitoredTrainingSession(master=server.target,
-        is_chief=(FLAGS.task_index == 0),
-        checkpoint_dir=LOG_DIR,
-        hooks = hooks) as sess:
+        # with tf.train.MonitoredTrainingSession(master=server.target,
+        #     is_chief=(FLAGS.task_index == 0),
+        #     checkpoint_dir=LOG_DIR,
+        #     hooks = hooks) as sess:
 
-        while not sess.should_stop():        
+        #     while not sess.should_stop():        
             print(line)
             print("--- about_GPU_time:  %s seconds ---" % (time.time() - start_time))
             print(line)
@@ -400,5 +400,5 @@ elif FLAGS.job_name == "worker":
                         # print("Model saved.")
             sess.close()       
 
-        sv.stop() 
+            # sv.stop() 
 
