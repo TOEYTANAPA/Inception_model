@@ -14,13 +14,13 @@ import time
 from tensorflow.examples.tutorials.mnist import input_data
 line = "======================================================================"
 
-parameter_servers = ["localhost:2222"]
-workers = ["localhost:2223","localhost:2224","localhost:2225"]
-cluster = tf.train.ClusterSpec({"ps": parameter_servers, "worker":workers})
-tf.app.flags.DEFINE_string("job_name", "", "'ps' / 'worker'")
-tf.app.flags.DEFINE_integer("task_index", 0, "Index of task")
-FLAGS = tf.app.flags.FLAGS
-server = tf.train.Server(cluster,job_name=FLAGS.job_name,task_index=FLAGS.task_index, protocol='grpc+gdr')
+# parameter_servers = ["localhost:2222"]
+# workers = ["localhost:2223","localhost:2224","localhost:2225"]
+# cluster = tf.train.ClusterSpec({"ps": parameter_servers, "worker":workers})
+# tf.app.flags.DEFINE_string("job_name", "", "'ps' / 'worker'")
+# tf.app.flags.DEFINE_integer("task_index", 0, "Index of task")
+# FLAGS = tf.app.flags.FLAGS
+# server = tf.train.Server(cluster,job_name=FLAGS.job_name,task_index=FLAGS.task_index, protocol='grpc+gdr')
 
 
 start_time = time.time()
@@ -93,7 +93,7 @@ def accuracy(target,predictions):
 
 
 #use os to get our current working directory so we can save variable
-# file_path = os.getcwd()+'/model.ckpt'
+file_path = os.getcwd()+'/model.ckpt'
 
 
 # In[20]:
@@ -107,288 +107,288 @@ def accuracy(target,predictions):
 # In[23]:
 
 
-if FLAGS.job_name == "ps":
-  server.join()
-elif FLAGS.job_name == "worker":
-  with tf.device(tf.train.replica_device_setter(worker_device="/job:worker/task:%d" % FLAGS.task_index,cluster=cluster)):global_step = tf.get_variable('global_step', [],initializer=tf.constant_initializer(0),trainable=False)
+# if FLAGS.job_name == "ps":
+#   server.join()
+# elif FLAGS.job_name == "worker":
+#   with tf.device(tf.train.replica_device_setter(worker_device="/job:worker/task:%d" % FLAGS.task_index,cluster=cluster)):global_step = tf.get_variable('global_step', [],initializer=tf.constant_initializer(0),trainable=False)
 
 
 
-graph = tf.Graph()
-with graph.as_default():
-    batch_size = 48
-    map1 = 32
-    map2 = 64
-    num_fc1 = 700 #1028
-    num_fc2 = 10
-    reduce1x1 = 16
-    dropout=0.5
+# graph = tf.Graph()
+# with graph.as_default():
+batch_size = 48
+map1 = 32
+map2 = 64
+num_fc1 = 700 #1028
+num_fc2 = 10
+reduce1x1 = 16
+dropout=0.5
 
 
-    with tf.device("/job:ps/task:0"):
+    # with tf.device("/job:ps/task:0"):
         #train data and labels
-        X = tf.placeholder(tf.float32,shape=(batch_size,28,28,1))
-        y_ = tf.placeholder(tf.float32,shape=(batch_size,10))
-        
-        #validation data
-        tf_valX = tf.placeholder(tf.float32,shape=(len(valX),28,28,1))
-        
-        #test data
-        tf_testX=tf.placeholder(tf.float32,shape=(test_batch_size,28,28,1))
-        
-        def createWeight(size,Name):
-            return tf.Variable(tf.truncated_normal(size, stddev=0.1),
-                              name=Name)
-        
-        def createBias(size,Name):
-            return tf.Variable(tf.constant(0.1,shape=size),
-                              name=Name)
-        
-        def conv2d_s1(x,W):
-            return tf.nn.conv2d(x,W,strides=[1,1,1,1],padding='SAME')
-        
-        def max_pool_3x3_s1(x):
-            return tf.nn.max_pool(x,ksize=[1,3,3,1],
-                                 strides=[1,1,1,1],padding='SAME')
-        
+X = tf.placeholder(tf.float32,shape=(batch_size,28,28,1))
+y_ = tf.placeholder(tf.float32,shape=(batch_size,10))
 
-    with tf.device("/job:ps/task:1"):
+#validation data
+tf_valX = tf.placeholder(tf.float32,shape=(len(valX),28,28,1))
+
+#test data
+tf_testX=tf.placeholder(tf.float32,shape=(test_batch_size,28,28,1))
+
+def createWeight(size,Name):
+    return tf.Variable(tf.truncated_normal(size, stddev=0.1),
+                      name=Name)
+
+def createBias(size,Name):
+    return tf.Variable(tf.constant(0.1,shape=size),
+                      name=Name)
+
+def conv2d_s1(x,W):
+    return tf.nn.conv2d(x,W,strides=[1,1,1,1],padding='SAME')
+
+def max_pool_3x3_s1(x):
+    return tf.nn.max_pool(x,ksize=[1,3,3,1],
+                         strides=[1,1,1,1],padding='SAME')
+
+
+    # with tf.device("/job:ps/task:1"):
         #Inception Module1
         #
         #follows input
-        W_conv1_1x1_1 = createWeight([1,1,1,map1],'W_conv1_1x1_1')
-        b_conv1_1x1_1 = createWeight([map1],'b_conv1_1x1_1')
-        
-        #follows input
-        W_conv1_1x1_2 = createWeight([1,1,1,reduce1x1],'W_conv1_1x1_2')
-        b_conv1_1x1_2 = createWeight([reduce1x1],'b_conv1_1x1_2')
-        
-        #follows input
-        W_conv1_1x1_3 = createWeight([1,1,1,reduce1x1],'W_conv1_1x1_3')
-        b_conv1_1x1_3 = createWeight([reduce1x1],'b_conv1_1x1_3')
-        
-        #follows 1x1_2
-        W_conv1_3x3 = createWeight([3,3,reduce1x1,map1],'W_conv1_3x3')
-        b_conv1_3x3 = createWeight([map1],'b_conv1_3x3')
-        
-        #follows 1x1_3
-        W_conv1_5x5 = createWeight([5,5,reduce1x1,map1],'W_conv1_5x5')
-        b_conv1_5x5 = createBias([map1],'b_conv1_5x5')
-        
-        #follows max pooling
-        W_conv1_1x1_4= createWeight([1,1,1,map1],'W_conv1_1x1_4')
-        b_conv1_1x1_4= createWeight([map1],'b_conv1_1x1_4')
-        
-        
-        
-        #Inception Module2
-        #
-        #follows inception1
-        W_conv2_1x1_1 = createWeight([1,1,4*map1,map2],'W_conv2_1x1_1')
-        b_conv2_1x1_1 = createWeight([map2],'b_conv2_1x1_1')
-        
-        #follows inception1
-        W_conv2_1x1_2 = createWeight([1,1,4*map1,reduce1x1],'W_conv2_1x1_2')
-        b_conv2_1x1_2 = createWeight([reduce1x1],'b_conv2_1x1_2')
-        
-        #follows inception1
-        W_conv2_1x1_3 = createWeight([1,1,4*map1,reduce1x1],'W_conv2_1x1_3')
-        b_conv2_1x1_3 = createWeight([reduce1x1],'b_conv2_1x1_3')
-        
-        #follows 1x1_2
-        W_conv2_3x3 = createWeight([3,3,reduce1x1,map2],'W_conv2_3x3')
-        b_conv2_3x3 = createWeight([map2],'b_conv2_3x3')
-        
-        #follows 1x1_3
-        W_conv2_5x5 = createWeight([5,5,reduce1x1,map2],'W_conv2_5x5')
-        b_conv2_5x5 = createBias([map2],'b_conv2_5x5')
-        
-        #follows max pooling
-        W_conv2_1x1_4= createWeight([1,1,4*map1,map2],'W_conv2_1x1_4')
-        b_conv2_1x1_4= createWeight([map2],'b_conv2_1x1_4')
-        
-        
+W_conv1_1x1_1 = createWeight([1,1,1,map1],'W_conv1_1x1_1')
+b_conv1_1x1_1 = createWeight([map1],'b_conv1_1x1_1')
 
-        #Fully connected layers
-        #since padding is same, the feature map with there will be 4 28*28*map2
-        W_fc1 = createWeight([28*28*(4*map2),num_fc1],'W_fc1')
-        b_fc1 = createBias([num_fc1],'b_fc1')
-        
-        W_fc2 = createWeight([num_fc1,num_fc2],'W_fc2')
-        b_fc2 = createBias([num_fc2],'b_fc2')
+#follows input
+W_conv1_1x1_2 = createWeight([1,1,1,reduce1x1],'W_conv1_1x1_2')
+b_conv1_1x1_2 = createWeight([reduce1x1],'b_conv1_1x1_2')
+
+#follows input
+W_conv1_1x1_3 = createWeight([1,1,1,reduce1x1],'W_conv1_1x1_3')
+b_conv1_1x1_3 = createWeight([reduce1x1],'b_conv1_1x1_3')
+
+#follows 1x1_2
+W_conv1_3x3 = createWeight([3,3,reduce1x1,map1],'W_conv1_3x3')
+b_conv1_3x3 = createWeight([map1],'b_conv1_3x3')
+
+#follows 1x1_3
+W_conv1_5x5 = createWeight([5,5,reduce1x1,map1],'W_conv1_5x5')
+b_conv1_5x5 = createBias([map1],'b_conv1_5x5')
+
+#follows max pooling
+W_conv1_1x1_4= createWeight([1,1,1,map1],'W_conv1_1x1_4')
+b_conv1_1x1_4= createWeight([map1],'b_conv1_1x1_4')
 
 
-    with tf.device("/job:worker/task:7"):
-        def model(x,train=True):
-            #Inception Module 1     
-            start_time = time.time()
-            conv1_1x1_1 = conv2d_s1(x,W_conv1_1x1_1)+b_conv1_1x1_1
-    #         new_df.loc[len(new_df)] = ['conv1_1x1_1',(time.time() - start_time)]
-            
-            start_time = time.time()
-            conv1_1x1_2 = tf.nn.relu(conv2d_s1(x,W_conv1_1x1_2)+b_conv1_1x1_2)
-    #         new_df.loc[len(new_df)] = ['conv1_1x1_2',(time.time() - start_time)]
-            
-            start_time = time.time()
-            conv1_1x1_3 = tf.nn.relu(conv2d_s1(x,W_conv1_1x1_3)+b_conv1_1x1_3)
-    #         new_df.loc[len(new_df)] = ['conv1_1x1_3' ,(time.time() - start_time)]
-            
-            start_time = time.time()
-            conv1_3x3 = conv2d_s1(conv1_1x1_2,W_conv1_3x3)+b_conv1_3x3
-    #         new_df.loc[len(new_df)] = ['conv1_3x3' ,(time.time() - start_time)]
-            
-            start_time = time.time()
-            conv1_5x5 = conv2d_s1(conv1_1x1_3,W_conv1_5x5)+b_conv1_5x5
-    #         new_df.loc[len(new_df)] = ['conv1_5x5' ,(time.time() - start_time)]
-            
-            start_time = time.time()
-            maxpool1 = max_pool_3x3_s1(x)
-    #         new_df.loc[len(new_df)] = ['maxpool1' ,(time.time() - start_time)]
-            
-            start_time = time.time()
-            conv1_1x1_4 = conv2d_s1(maxpool1,W_conv1_1x1_4)+b_conv1_1x1_4
-    #         new_df.loc[len(new_df)] = ['conv1_1x1_4' ,(time.time() - start_time)]
-            
-            #concatenate all the feature maps and hit them with a relu
-            inception1 = tf.nn.relu(tf.concat([conv1_1x1_1,conv1_3x3,conv1_5x5,conv1_1x1_4],3))
 
-            
-            #Inception Module 2
-            start_time = time.time()
-            conv2_1x1_1 = conv2d_s1(inception1,W_conv2_1x1_1)+b_conv2_1x1_1
-    #         new_df.loc[len(new_df)] = ['conv2_1x1_1' ,(time.time() - start_time)]
-            
-            start_time = time.time()
-            conv2_1x1_2 = tf.nn.relu(conv2d_s1(inception1,W_conv2_1x1_2)+b_conv2_1x1_2)
-    #         new_df.loc[len(new_df)] = ['conv2_1x1_2' ,(time.time() - start_time)]
-            
-            start_time = time.time()
-            conv2_1x1_3 = tf.nn.relu(conv2d_s1(inception1,W_conv2_1x1_3)+b_conv2_1x1_3)
-    #         new_df.loc[len(new_df)] = ['conv2_1x1_3' ,(time.time() - start_time)]
-            
-            start_time = time.time()
-            conv2_3x3 = conv2d_s1(conv2_1x1_2,W_conv2_3x3)+b_conv2_3x3
-    #         new_df.loc[len(new_df)] = ['conv2_3x3' ,(time.time() - start_time)]
-            
-            start_time = time.time()
-            conv2_5x5 = conv2d_s1(conv2_1x1_3,W_conv2_5x5)+b_conv2_5x5
-    #         new_df.loc[len(new_df)] = ['conv2_5x5' ,(time.time() - start_time)]
-            
-            start_time = time.time()
-            maxpool2 = max_pool_3x3_s1(inception1)
-    #         new_df.loc[len(new_df)] = ['maxpool2' ,(time.time() - start_time)]
-            
-            start_time = time.time()
-            conv2_1x1_4 = conv2d_s1(maxpool2,W_conv2_1x1_4)+b_conv2_1x1_4
-    #         new_df.loc[len(new_df)] = ['conv2_1x1_4' ,(time.time() - start_time)]
-            
-            #concatenate all the feature maps and hit them with a relu
-            start_time = time.time()
-            inception2 = tf.nn.relu(tf.concat([conv2_1x1_1,conv2_3x3,conv2_5x5,conv2_1x1_4],3))
-    #         new_df.loc[len(new_df)] = ['inception2' ,(time.time() - start_time)]
+#Inception Module2
+#
+#follows inception1
+W_conv2_1x1_1 = createWeight([1,1,4*map1,map2],'W_conv2_1x1_1')
+b_conv2_1x1_1 = createWeight([map2],'b_conv2_1x1_1')
 
-            #flatten features for fully connected layer
-            start_time = time.time()
-            inception2_flat = tf.reshape(inception2,[-1,28*28*4*map2])
-    #         new_df.loc[len(new_df)] = ['inception2_flat' ,(time.time() - start_time)]
-            
-            #Fully connected layers
-            if train:
-                h_fc1 =tf.nn.dropout(tf.nn.relu(tf.matmul(inception2_flat,W_fc1)+b_fc1),dropout)
-            else:
-                h_fc1 = tf.nn.relu(tf.matmul(inception2_flat,W_fc1)+b_fc1)
+#follows inception1
+W_conv2_1x1_2 = createWeight([1,1,4*map1,reduce1x1],'W_conv2_1x1_2')
+b_conv2_1x1_2 = createWeight([reduce1x1],'b_conv2_1x1_2')
 
-            return tf.matmul(h_fc1,W_fc2)+b_fc2
-        
-    #     tf.nn.softmax_cross_entropy_with_logits(logits = yPredbyNN, labels=Y)
-        loss = tf.reduce_mean(
-            tf.nn.softmax_cross_entropy_with_logits(logits=model(X),labels=y_))
-        opt = tf.train.AdamOptimizer(1e-4).minimize(loss)
-        
-        predictions_val = tf.nn.softmax(model(tf_valX,train=False))
-        predictions_test = tf.nn.softmax(model(tf_testX,train=False))
-        
-        #initialize variable
-        init = tf.initialize_all_variables()
-        
-        #use to save variables so we can pick up later
-        saver = tf.train.Saver()
+#follows inception1
+W_conv2_1x1_3 = createWeight([1,1,4*map1,reduce1x1],'W_conv2_1x1_3')
+b_conv2_1x1_3 = createWeight([reduce1x1],'b_conv2_1x1_3')
 
-    with tf.Session("grpc://worker7.example.com:2222") as sess:
+#follows 1x1_2
+W_conv2_3x3 = createWeight([3,3,reduce1x1,map2],'W_conv2_3x3')
+b_conv2_3x3 = createWeight([map2],'b_conv2_3x3')
+
+#follows 1x1_3
+W_conv2_5x5 = createWeight([5,5,reduce1x1,map2],'W_conv2_5x5')
+b_conv2_5x5 = createBias([map2],'b_conv2_5x5')
+
+#follows max pooling
+W_conv2_1x1_4= createWeight([1,1,4*map1,map2],'W_conv2_1x1_4')
+b_conv2_1x1_4= createWeight([map2],'b_conv2_1x1_4')
+
+
+
+#Fully connected layers
+#since padding is same, the feature map with there will be 4 28*28*map2
+W_fc1 = createWeight([28*28*(4*map2),num_fc1],'W_fc1')
+b_fc1 = createBias([num_fc1],'b_fc1')
+
+W_fc2 = createWeight([num_fc1,num_fc2],'W_fc2')
+b_fc2 = createBias([num_fc2],'b_fc2')
+
+
+    # with tf.device("/job:worker/task:7"):
+def model(x,train=True):
+    #Inception Module 1     
+    start_time = time.time()
+    conv1_1x1_1 = conv2d_s1(x,W_conv1_1x1_1)+b_conv1_1x1_1
+#         new_df.loc[len(new_df)] = ['conv1_1x1_1',(time.time() - start_time)]
+    
+    start_time = time.time()
+    conv1_1x1_2 = tf.nn.relu(conv2d_s1(x,W_conv1_1x1_2)+b_conv1_1x1_2)
+#         new_df.loc[len(new_df)] = ['conv1_1x1_2',(time.time() - start_time)]
+    
+    start_time = time.time()
+    conv1_1x1_3 = tf.nn.relu(conv2d_s1(x,W_conv1_1x1_3)+b_conv1_1x1_3)
+#         new_df.loc[len(new_df)] = ['conv1_1x1_3' ,(time.time() - start_time)]
+    
+    start_time = time.time()
+    conv1_3x3 = conv2d_s1(conv1_1x1_2,W_conv1_3x3)+b_conv1_3x3
+#         new_df.loc[len(new_df)] = ['conv1_3x3' ,(time.time() - start_time)]
+    
+    start_time = time.time()
+    conv1_5x5 = conv2d_s1(conv1_1x1_3,W_conv1_5x5)+b_conv1_5x5
+#         new_df.loc[len(new_df)] = ['conv1_5x5' ,(time.time() - start_time)]
+    
+    start_time = time.time()
+    maxpool1 = max_pool_3x3_s1(x)
+#         new_df.loc[len(new_df)] = ['maxpool1' ,(time.time() - start_time)]
+    
+    start_time = time.time()
+    conv1_1x1_4 = conv2d_s1(maxpool1,W_conv1_1x1_4)+b_conv1_1x1_4
+#         new_df.loc[len(new_df)] = ['conv1_1x1_4' ,(time.time() - start_time)]
+    
+    #concatenate all the feature maps and hit them with a relu
+    inception1 = tf.nn.relu(tf.concat([conv1_1x1_1,conv1_3x3,conv1_5x5,conv1_1x1_4],3))
+
+    
+    #Inception Module 2
+    start_time = time.time()
+    conv2_1x1_1 = conv2d_s1(inception1,W_conv2_1x1_1)+b_conv2_1x1_1
+#         new_df.loc[len(new_df)] = ['conv2_1x1_1' ,(time.time() - start_time)]
+    
+    start_time = time.time()
+    conv2_1x1_2 = tf.nn.relu(conv2d_s1(inception1,W_conv2_1x1_2)+b_conv2_1x1_2)
+#         new_df.loc[len(new_df)] = ['conv2_1x1_2' ,(time.time() - start_time)]
+    
+    start_time = time.time()
+    conv2_1x1_3 = tf.nn.relu(conv2d_s1(inception1,W_conv2_1x1_3)+b_conv2_1x1_3)
+#         new_df.loc[len(new_df)] = ['conv2_1x1_3' ,(time.time() - start_time)]
+    
+    start_time = time.time()
+    conv2_3x3 = conv2d_s1(conv2_1x1_2,W_conv2_3x3)+b_conv2_3x3
+#         new_df.loc[len(new_df)] = ['conv2_3x3' ,(time.time() - start_time)]
+    
+    start_time = time.time()
+    conv2_5x5 = conv2d_s1(conv2_1x1_3,W_conv2_5x5)+b_conv2_5x5
+#         new_df.loc[len(new_df)] = ['conv2_5x5' ,(time.time() - start_time)]
+    
+    start_time = time.time()
+    maxpool2 = max_pool_3x3_s1(inception1)
+#         new_df.loc[len(new_df)] = ['maxpool2' ,(time.time() - start_time)]
+    
+    start_time = time.time()
+    conv2_1x1_4 = conv2d_s1(maxpool2,W_conv2_1x1_4)+b_conv2_1x1_4
+#         new_df.loc[len(new_df)] = ['conv2_1x1_4' ,(time.time() - start_time)]
+    
+    #concatenate all the feature maps and hit them with a relu
+    start_time = time.time()
+    inception2 = tf.nn.relu(tf.concat([conv2_1x1_1,conv2_3x3,conv2_5x5,conv2_1x1_4],3))
+#         new_df.loc[len(new_df)] = ['inception2' ,(time.time() - start_time)]
+
+    #flatten features for fully connected layer
+    start_time = time.time()
+    inception2_flat = tf.reshape(inception2,[-1,28*28*4*map2])
+#         new_df.loc[len(new_df)] = ['inception2_flat' ,(time.time() - start_time)]
+    
+    #Fully connected layers
+    if train:
+        h_fc1 =tf.nn.dropout(tf.nn.relu(tf.matmul(inception2_flat,W_fc1)+b_fc1),dropout)
+    else:
+        h_fc1 = tf.nn.relu(tf.matmul(inception2_flat,W_fc1)+b_fc1)
+
+    return tf.matmul(h_fc1,W_fc2)+b_fc2
+
+#     tf.nn.softmax_cross_entropy_with_logits(logits = yPredbyNN, labels=Y)
+loss = tf.reduce_mean(
+    tf.nn.softmax_cross_entropy_with_logits(logits=model(X),labels=y_))
+opt = tf.train.AdamOptimizer(1e-4).minimize(loss)
+
+predictions_val = tf.nn.softmax(model(tf_valX,train=False))
+predictions_test = tf.nn.softmax(model(tf_testX,train=False))
+
+#initialize variable
+init = tf.initialize_all_variables()
+
+#use to save variables so we can pick up later
+saver = tf.train.Saver()
+
+    # with tf.Session("grpc://worker7.example.com:2222") as sess:
       
     #set use_previous=1 to use file_path model
     #set use_previous=0 to start model from scratch
-        use_previous = 0
-    # with tf.device('/device:GPU:1'):
-        num_steps = 20000
+use_previous = 0
+# with tf.device('/device:GPU:1'):
+num_steps = 20000
 
-        config=tf.ConfigProto(log_device_placement=True)
-        # maximun alloc gpu 10% of MEM
-        config.gpu_options.per_process_gpu_memory_fraction = 0.1 
-        config.gpu_options.allow_growth = True #allocate dynamically
-        sess = tf.Session(config = config)
+config=tf.ConfigProto(log_device_placement=True)
+# maximun alloc gpu 10% of MEM
+config.gpu_options.per_process_gpu_memory_fraction = 0.1 
+config.gpu_options.allow_growth = True #allocate dynamically
+sess = tf.Session(config = config)
 
-        with tf.Session(graph=graph) as sess:
+with tf.Session(graph=graph) as sess:
 
-            #initialize variables
-            sess.run(init)
-            print("Model initialized.")
-            
-            #use the previous model or don't and initialize variables
-            if use_previous:
-                saver.restore(sess,file_path)
-                print("Model restored.")
-
-            #training
-            for s in range(num_steps):
-                start_time = time.time()
-
-                offset = (s*batch_size) % (len(trainX)-batch_size)
-                batch_x,batch_y = trainX[offset:(offset+batch_size),:],train_lb[offset:(offset+batch_size),:]
-                feed_dict={X : batch_x, y_ : batch_y}
-
-                _,loss_value = sess.run([opt,loss],feed_dict=feed_dict)
-
-                print("step",s)
-                print("--- %s seconds ---" % (time.time() - start_time))
-            #     new_entry = {'time_used/sec': 'device1', 'months': 'month1'}
-            #     new_df = pd.concat([new_df, "step", axis=0)
-            #     new_df.loc[len(new_df)] = ['step {}'.format(s) ,(time.time() - start_time)]
-
-
-                if s%100 == 0:
-                    feed_dict = {tf_valX : valX}
-                    preds=sess.run(predictions_val,feed_dict=feed_dict)
-
-                    print ("step: "+str(s))
-                    print ("validation accuracy: "+str(accuracy(val_lb,preds)))
-                    print (" ")
-                    print("--- %s seconds ---" % (time.time() - start_time))
-
-
-                #get test accuracy and save model
-                if s == (num_steps-1):
-                    #create an array to store the outputs for the test
-                    result = np.array([]).reshape(0,10)
-
-                    #use the batches class
-                    batch_testX=test_batchs(testX)
-
-                    for i in range(len(testX)/test_batch_size):
-                        feed_dict = {tf_testX : batch_testX.nextBatch(test_batch_size)}
-                        preds=sess.run(predictions_test, feed_dict=feed_dict)
-                        result=np.concatenate((result,preds),axis=0)
-
-                    print ("test accuracy: "+str(accuracy(test_lb,result)))
-
-                    save_path = saver.save(sess,file_path)
-                    print("Model saved.")
-        sess.close()       
-
-
-
+    #initialize variables
+    sess.run(init)
+    print("Model initialized.")
     
-    
+    #use the previous model or don't and initialize variables
+    if use_previous:
+        saver.restore(sess,file_path)
+        print("Model restored.")
+
+    #training
+    for s in range(num_steps):
+        start_time = time.time()
+
+        offset = (s*batch_size) % (len(trainX)-batch_size)
+        batch_x,batch_y = trainX[offset:(offset+batch_size),:],train_lb[offset:(offset+batch_size),:]
+        feed_dict={X : batch_x, y_ : batch_y}
+
+        _,loss_value = sess.run([opt,loss],feed_dict=feed_dict)
+
+        print("step",s)
+        print("--- %s seconds ---" % (time.time() - start_time))
+    #     new_entry = {'time_used/sec': 'device1', 'months': 'month1'}
+    #     new_df = pd.concat([new_df, "step", axis=0)
+    #     new_df.loc[len(new_df)] = ['step {}'.format(s) ,(time.time() - start_time)]
+
+
+        if s%100 == 0:
+            feed_dict = {tf_valX : valX}
+            preds=sess.run(predictions_val,feed_dict=feed_dict)
+
+            print ("step: "+str(s))
+            print ("validation accuracy: "+str(accuracy(val_lb,preds)))
+            print (" ")
+            print("--- %s seconds ---" % (time.time() - start_time))
+
+
+        #get test accuracy and save model
+        if s == (num_steps-1):
+            #create an array to store the outputs for the test
+            result = np.array([]).reshape(0,10)
+
+            #use the batches class
+            batch_testX=test_batchs(testX)
+
+            for i in range(len(testX)/test_batch_size):
+                feed_dict = {tf_testX : batch_testX.nextBatch(test_batch_size)}
+                preds=sess.run(predictions_test, feed_dict=feed_dict)
+                result=np.concatenate((result,preds),axis=0)
+
+            print ("test accuracy: "+str(accuracy(test_lb,result)))
+
+            save_path = saver.save(sess,file_path)
+            print("Model saved.")
+sess.close()       
+
+
+
+
+
    
     
 
