@@ -317,7 +317,7 @@ elif FLAGS.job_name == "worker":
 
         LOG_DIR = "/tmp/log"
     # with tf.device('/device:GPU:1'):
-    #     num_steps = 20000
+        num_steps = 20000
 
         # start_time = time.time()
         # config=tf.ConfigProto(log_device_placement=True)
