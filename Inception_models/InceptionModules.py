@@ -351,7 +351,12 @@ num_steps = 20000
 # config.gpu_options.allow_growth = True #allocate dynamically
 # sess = tf.Session(config = config)
 
-sess = tf.Session(graph=graph)
+config=tf.ConfigProto(log_device_placement=True)
+# maximun alloc gpu 10% of MEM
+config.gpu_options.per_process_gpu_memory_fraction = 0.1
+config.gpu_options.allow_growth = True #allocate dynamically
+sess = tf.Session(config = config)
+# sess = tf.Session(graph=graph)
 
 #initialize variables
 sess.run(init)
