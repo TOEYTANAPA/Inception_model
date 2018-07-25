@@ -7,8 +7,8 @@ from tensorflow.examples.tutorials.mnist import input_data
 line = "======================================================================"
 
 
-parameter_servers = ["localhost:2222"]
-workers = ["localhost:2223","localhost:2224","localhost:2225"]
+parameter_servers = ["192.168.148.12:2222"]
+workers = ["192.168.148.12:2223","192.168.148.12:2224","192.168.148.12:2225"]
 cluster = tf.train.ClusterSpec({"ps": parameter_servers, "worker":workers})
 tf.app.flags.DEFINE_string("job_name", "", "'ps' / 'worker'")
 tf.app.flags.DEFINE_integer("task_index", 0, "Index of task")
@@ -297,6 +297,8 @@ elif FLAGS.job_name == "worker":
 
             #initialize variable
             init = tf.initialize_all_variables()
+            init_op = tf.global_variables_initializer()
+
 
             #use to save variables so we can pick up later
             saver = tf.train.Saver()
@@ -324,10 +326,19 @@ elif FLAGS.job_name == "worker":
     # config.gpu_options.allow_growth = True #allocate dynamically
     # sess = tf.Session(config = config)
 
-    sv = tf.train.Supervisor(is_chief=(FLAGS.task_index == 0), logdir=LOG_DIR,global_step=global_step,init_op=init) 
-    with sv.managed_session(server.target) as sess:
-        step = 0 
-        while not sv.should_stop() and step <= TRAINING_STEPS: 
+    # sv = tf.train.Supervisor(is_chief=(FLAGS.task_index == 0), logdir=LOG_DIR,global_step=global_step,init_op=init_op) 
+    # with sv.managed_session(server.target) as sess:
+    #     step = 0 
+    #     while not sv.should_stop() and step <= TRAINING_STEPS: 
+
+    hooks=[tf.train.StopAtStepHook(last_step=100000)]
+
+    with tf.train.MonitoredTrainingSession(master=server.target,
+        is_chief=(FLAGS.task_index == 0),
+        checkpoint_dir=LOG_DIR,
+        hooks = hooks) as sess:
+
+        while not sess.should_stop():        
             print(line)
             print("--- about_GPU_time:  %s seconds ---" % (time.time() - start_time))
             print(line)
@@ -338,9 +349,9 @@ elif FLAGS.job_name == "worker":
                 print("Model initialized.")
 
                 #use the previous model or don't and initialize variables
-                if use_previous:
-                    saver.restore(sess,file_path)
-                    print("Model restored.")
+                # if use_previous:
+                #     saver.restore(sess,file_path)
+                #     print("Model restored.")
 
                 #training
                 for s in range(num_steps):
@@ -385,8 +396,8 @@ elif FLAGS.job_name == "worker":
 
                         print ("test accuracy: "+str(accuracy(test_lb,result)))
 
-                        save_path = saver.save(sess,file_path)
-                        print("Model saved.")
+                        # save_path = saver.save(sess,file_path)
+                        # print("Model saved.")
             sess.close()       
 
         sv.stop() 
