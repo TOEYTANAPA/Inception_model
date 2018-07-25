@@ -345,13 +345,13 @@ with graph.as_default():
 
 
 num_steps = 20000
-os.environ["CUDA_VISIBLE_DEVICES"] = '0' #use GPU with ID=0
-config = tf.ConfigProto()
-config.gpu_options.per_process_gpu_memory_fraction = 0.5 # maximun alloc gpu50% of MEM
-config.gpu_options.allow_growth = True #allocate dynamically
-sess = tf.Session(config = config)
+# os.environ["CUDA_VISIBLE_DEVICES"] = '0' #use GPU with ID=0
+# config = tf.ConfigProto()
+# config.gpu_options.per_process_gpu_memory_fraction = 0.5 # maximun alloc gpu50% of MEM
+# config.gpu_options.allow_growth = True #allocate dynamically
+# sess = tf.Session(config = config)
 
-# sess = tf.Session(graph=graph)
+sess = tf.Session(graph=graph)
 
 #initialize variables
 sess.run(init)
@@ -376,9 +376,9 @@ for s in range(num_steps):
         feed_dict = {tf_valX : valX}
         preds=sess.run(predictions_val,feed_dict=feed_dict)
         
-        print "step: "+str(s)
-        print "validation accuracy: "+str(accuracy(val_lb,preds))
-        print " "
+        print ("step: "+str(s))
+        print ("validation accuracy: "+str(accuracy(val_lb,preds)))
+        print (" ")
         
     #get test accuracy and save model
     if s == (num_steps-1):
@@ -393,7 +393,7 @@ for s in range(num_steps):
             preds=sess.run(predictions_test, feed_dict=feed_dict)
             result=np.concatenate((result,preds),axis=0)
         
-        print "test accuracy: "+str(accuracy(test_lb,result))
+        print ("test accuracy: "+str(accuracy(test_lb,result)))
         
         save_path = saver.save(sess,file_path)
         print("Model saved.")
