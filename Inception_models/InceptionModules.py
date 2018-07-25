@@ -350,55 +350,56 @@ num_steps = 20000
 # config.gpu_options.per_process_gpu_memory_fraction = 0.5 # maximun alloc gpu50% of MEM
 # config.gpu_options.allow_growth = True #allocate dynamically
 # sess = tf.Session(config = config)
+with tf.device('/device:GPU:1'):
 
-config=tf.ConfigProto(log_device_placement=True)
-# maximun alloc gpu 10% of MEM
-config.gpu_options.per_process_gpu_memory_fraction = 0.1
-config.gpu_options.allow_growth = True #allocate dynamically
-sess = tf.Session(config = config)
-# sess = tf.Session(graph=graph)
+    config=tf.ConfigProto(log_device_placement=True)
+    # maximun alloc gpu 10% of MEM
+    config.gpu_options.per_process_gpu_memory_fraction = 0.1
+    config.gpu_options.allow_growth = True #allocate dynamically
+    sess = tf.Session(config = config)
+    # sess = tf.Session(graph=graph)
 
-#initialize variables
-sess.run(init)
-print("Model initialized.")
+    #initialize variables
+    sess.run(init)
+    print("Model initialized.")
 
-#set use_previous=1 to use file_path model
-#set use_previous=0 to start model from scratch
-use_previous = 0
+    #set use_previous=1 to use file_path model
+    #set use_previous=0 to start model from scratch
+    use_previous = 0
 
-#use the previous model or don't and initialize variables
-if use_previous:
-    saver.restore(sess,file_path)
-    print("Model restored.")
+    #use the previous model or don't and initialize variables
+    if use_previous:
+        saver.restore(sess,file_path)
+        print("Model restored.")
 
-#training
-for s in range(num_steps):
-    offset = (s*batch_size) % (len(trainX)-batch_size)
-    batch_x,batch_y = trainX[offset:(offset+batch_size),:],train_lb[offset:(offset+batch_size),:]
-    feed_dict={X : batch_x, y_ : batch_y}
-    _,loss_value = sess.run([opt,loss],feed_dict=feed_dict)
-    if s%100 == 0:
-        feed_dict = {tf_valX : valX}
-        preds=sess.run(predictions_val,feed_dict=feed_dict)
-        
-        print ("step: "+str(s))
-        print ("validation accuracy: "+str(accuracy(val_lb,preds)))
-        print (" ")
-        
-    #get test accuracy and save model
-    if s == (num_steps-1):
-        #create an array to store the outputs for the test
-        result = np.array([]).reshape(0,10)
+    #training
+    for s in range(num_steps):
+        offset = (s*batch_size) % (len(trainX)-batch_size)
+        batch_x,batch_y = trainX[offset:(offset+batch_size),:],train_lb[offset:(offset+batch_size),:]
+        feed_dict={X : batch_x, y_ : batch_y}
+        _,loss_value = sess.run([opt,loss],feed_dict=feed_dict)
+        if s%100 == 0:
+            feed_dict = {tf_valX : valX}
+            preds=sess.run(predictions_val,feed_dict=feed_dict)
+            
+            print ("step: "+str(s))
+            print ("validation accuracy: "+str(accuracy(val_lb,preds)))
+            print (" ")
+            
+        #get test accuracy and save model
+        if s == (num_steps-1):
+            #create an array to store the outputs for the test
+            result = np.array([]).reshape(0,10)
 
-        #use the batches class
-        batch_testX=test_batchs(testX)
+            #use the batches class
+            batch_testX=test_batchs(testX)
 
-        for i in range(len(testX)/test_batch_size):
-            feed_dict = {tf_testX : batch_testX.nextBatch(test_batch_size)}
-            preds=sess.run(predictions_test, feed_dict=feed_dict)
-            result=np.concatenate((result,preds),axis=0)
-        
-        print ("test accuracy: "+str(accuracy(test_lb,result)))
-        
-        save_path = saver.save(sess,file_path)
-        print("Model saved.")
+            for i in range(len(testX)/test_batch_size):
+                feed_dict = {tf_testX : batch_testX.nextBatch(test_batch_size)}
+                preds=sess.run(predictions_test, feed_dict=feed_dict)
+                result=np.concatenate((result,preds),axis=0)
+            
+            print ("test accuracy: "+str(accuracy(test_lb,result)))
+            
+            save_path = saver.save(sess,file_path)
+            print("Model saved.")
