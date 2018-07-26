@@ -7,13 +7,13 @@ from tensorflow.examples.tutorials.mnist import input_data
 line = "======================================================================"
 
 
-parameter_servers = ["192.168.148.12:2222"]
-workers = ["192.168.148.12:2223","192.168.148.12:2224","192.168.148.12:2225"]
+parameter_servers = ["localhost:2222"]
+workers = ["localhost:2223","localhost:2224"]
 cluster = tf.train.ClusterSpec({"ps": parameter_servers, "worker":workers})
 tf.app.flags.DEFINE_string("job_name", "", "'ps' / 'worker'")
 tf.app.flags.DEFINE_integer("task_index", 0, "Index of task")
 FLAGS = tf.app.flags.FLAGS
-server = tf.train.Server(cluster,job_name=FLAGS.job_name,task_index=FLAGS.task_index, protocol='grpc+gdr')
+server = tf.train.Server(cluster,job_name=FLAGS.job_name,task_index=FLAGS.task_index)
 
 
 start_time = time.time()
@@ -38,7 +38,7 @@ print(line)
 
 start_time = time.time()
 #get a validation set and remove it from the train set
-trainX,valX,train_lb,val_lb=trainX[0:(len(trainX)-500),:,:,:],trainX[(len(trainX)-500):len(trainX),:,:,:],                            train_lb[0:(len(trainX)-500),:],train_lb[(len(trainX)-500):len(trainX),:]
+trainX,valX,train_lb,val_lb=trainX[0:(len(trainX)-500),:,:,:],trainX[(len(trainX)-500):len(trainX),:,:,:],train_lb[0:(len(trainX)-500),:],train_lb[(len(trainX)-500):len(trainX),:]
 print("--- %s seconds ---" % (time.time() - start_time))
 print(line)
 
@@ -73,7 +73,6 @@ def accuracy(target,predictions):
 
 
 
-
 batch_size = 48
 map1 = 32
 map2 = 64
@@ -84,12 +83,10 @@ dropout=0.5
 graph = tf.Graph()
 
 if FLAGS.job_name == "ps":
-    server.join() 
+  server.join()
 elif FLAGS.job_name == "worker":
-    with tf.device(tf.train.replica_device_setter(worker_device="/job:worker/task:%d" % FLAGS.task_index,cluster=cluster)):
-        global_step = tf.get_variable('global_step', [],dtype='int32',initializer=tf.constant_initializer(0),trainable=False)  
-        #print(global_step) 
-        #print("===========================")
+  with tf.device(tf.train.replica_device_setter(worker_device="/job:worker/task:%d" % FLAGS.task_index,cluster=cluster)):
+        global_step = tf.get_variable('global_step', [],initializer=tf.constant_initializer(0),trainable=False)
 
         with graph.as_default():
             #train data and labels
@@ -105,13 +102,13 @@ elif FLAGS.job_name == "worker":
 
             def createWeight(size,Name):
                 return tf.Variable(tf.truncated_normal(size, stddev=0.1),
-                                  name=Name)
+                          name=Name)
 
 
-            start_time = time.time()
+
             def createBias(size,Name):
                 return tf.Variable(tf.constant(0.1,shape=size),
-                                  name=Name)
+                          name=Name)
 
 
 
@@ -120,8 +117,8 @@ elif FLAGS.job_name == "worker":
 
 
             def max_pool_3x3_s1(x):
-                return tf.nn.max_pool(x,ksize=[1,3,3,1],
-                                     strides=[1,1,1,1],padding='SAME')
+                 return tf.nn.max_pool(x,ksize=[1,3,3,1],
+                             strides=[1,1,1,1],padding='SAME')
 
             #Inception Module1
             #
@@ -151,17 +148,17 @@ elif FLAGS.job_name == "worker":
 
 
 
-            #Inception Module2
-            #
-            #follows inception1
+             #Inception Module2
+
+             #follows inception1
             W_conv2_1x1_1 = createWeight([1,1,4*map1,map2],'W_conv2_1x1_1')
             b_conv2_1x1_1 = createWeight([map2],'b_conv2_1x1_1')
 
-            #follows inception1
+             #follows inception1
             W_conv2_1x1_2 = createWeight([1,1,4*map1,reduce1x1],'W_conv2_1x1_2')
             b_conv2_1x1_2 = createWeight([reduce1x1],'b_conv2_1x1_2')
 
-            #follows inception1
+             #follows inception1
             W_conv2_1x1_3 = createWeight([1,1,4*map1,reduce1x1],'W_conv2_1x1_3')
             b_conv2_1x1_3 = createWeight([reduce1x1],'b_conv2_1x1_3')
 
@@ -300,108 +297,89 @@ elif FLAGS.job_name == "worker":
 
             #initialize variable
             init = tf.initialize_all_variables()
-            init_op = tf.global_variables_initializer()
-
 
             #use to save variables so we can pick up later
             saver = tf.train.Saver()
 
 
-    #set use_previous=1 to use file_path model
-    #set use_previous=0 to start model from scratch
-        use_previous = 0
+#set use_previous=1 to use file_path model
+#set use_previous=0 to start model from scratch
+use_previous = 0
+BATCH_SIZE = 50
+TRAINING_STEPS =100
+PRINT_EVERY = 100
+LOG_DIR = "/tmp/log+"
 
 
-        BATCH_SIZE = 50 
+with tf.device('/device:GPU:1'):
+    num_steps = 20000
 
-        TRAINING_STEPS = 20000 
+    start_time = time.time()
+    config=tf.ConfigProto(log_device_placement=True)
+    # maximun alloc gpu 10% of MEM
+    config.gpu_options.per_process_gpu_memory_fraction = 0.1
+    config.gpu_options.allow_growth = True #allocate dynamically
+    sess = tf.Session(config = config)
+    print(line)
+    print("--- about_GPU_time:  %s seconds ---" % (time.time() - start_time))
+    print(line)
+    with tf.Session(graph=graph) as sess:
 
-        PRINT_EVERY = 100 
+        #initialize variables
+        sess.run(init)
+        print("Model initialized.")
 
-        LOG_DIR = "/tmp/log"
-    # with tf.device('/device:GPU:1'):
-        num_steps = 20000
+        #use the previous model or don't and initialize variables
+        if use_previous:
+            saver.restore(sess,file_path)
+            print("Model restored.")
 
-        # start_time = time.time()
-        # config=tf.ConfigProto(log_device_placement=True)
-        # # maximun alloc gpu 10% of MEM
-        # config.gpu_options.per_process_gpu_memory_fraction = 0.1
-        # config.gpu_options.allow_growth = True #allocate dynamically
-        # sess = tf.Session(config = config)
+        #training
+        for s in range(num_steps):
+            start_time = time.time()
 
-        # sv = tf.train.Supervisor(is_chief=(FLAGS.task_index == 0), logdir=LOG_DIR,global_step=global_step,init_op=init_op) 
-        # with sv.managed_session(server.target) as sess:
-        #     step = 0 
-        #     while not sv.should_stop() and step <= TRAINING_STEPS: 
+            offset = (s*batch_size) % (len(trainX)-batch_size)
+            batch_x,batch_y = trainX[offset:(offset+batch_size),:],train_lb[offset:(offset+batch_size),:]
+            feed_dict={X : batch_x, y_ : batch_y}
 
-        # hooks=[tf.train.StopAtStepHook(last_step=100000)]
+            _,loss_value = sess.run([opt,loss],feed_dict=feed_dict)
 
-        # with tf.train.MonitoredTrainingSession(master=server.target,
-        #     is_chief=(FLAGS.task_index == 0),
-        #     checkpoint_dir=LOG_DIR,
-        #     hooks = hooks) as sess:
+            print("step",s)
+            print("--- %s seconds ---" % (time.time() - start_time))
+            print(line)
 
-        #     while not sess.should_stop():        
-        print(line)
-        print("--- about_GPU_time:  %s seconds ---" % (time.time() - start_time))
-        print(line)
-        with tf.Session(graph=graph) as sess:
 
-            #initialize variables
-            sess.run(init)
-            print("Model initialized.")
+            if s%100 == 0:
+                feed_dict = {tf_valX : valX}
+                preds=sess.run(predictions_val,feed_dict=feed_dict)
 
-            #use the previous model or don't and initialize variables
-            # if use_previous:
-            #     saver.restore(sess,file_path)
-            #     print("Model restored.")
-
-            #training
-            for s in range(num_steps):
-                start_time = time.time()
-
-                offset = (s*batch_size) % (len(trainX)-batch_size)
-                batch_x,batch_y = trainX[offset:(offset+batch_size),:],train_lb[offset:(offset+batch_size),:]
-                feed_dict={X : batch_x, y_ : batch_y}
-
-                _,loss_value = sess.run([opt,loss],feed_dict=feed_dict)
-
-                print("step",s)
+                print ("step: "+str(s))
+                print ("validation accuracy: "+str(accuracy(val_lb,preds)))
+                print (" ")
                 print("--- %s seconds ---" % (time.time() - start_time))
                 print(line)
 
+            #get test accuracy and save model
+            if s == (num_steps-1):
+                #create an array to store the outputs for the test
+                result = np.array([]).reshape(0,10)
 
-                if s%100 == 0:
-                    feed_dict = {tf_valX : valX}
-                    preds=sess.run(predictions_val,feed_dict=feed_dict)
+                #use the batches class
+                batch_testX=test_batchs(testX)
 
-                    print ("step: "+str(s))
-                    print ("validation accuracy: "+str(accuracy(val_lb,preds)))
-                    print (" ")
-                    print("--- %s seconds ---" % (time.time() - start_time))
-                    print(line)
-
-                #get test accuracy and save model
-                if s == (num_steps-1):
-                    #create an array to store the outputs for the test
-                    result = np.array([]).reshape(0,10)
-
-                    #use the batches class
-                    batch_testX=test_batchs(testX)
-
-                    start_time = time.time()
-                    for i in range(len(testX)/test_batch_size):
-                        feed_dict = {tf_testX : batch_testX.nextBatch(test_batch_size)}
-                        preds=sess.run(predictions_test, feed_dict=feed_dict)
-                        result=np.concatenate((result,preds),axis=0)
-                    print("--- loop_time %s seconds ---" % (time.time() - start_time))
+                start_time = time.time()
+                for i in range(len(testX)/test_batch_size):
+                    feed_dict = {tf_testX : batch_testX.nextBatch(test_batch_size)}
+                    preds=sess.run(predictions_test, feed_dict=feed_dict)
+                    result=np.concatenate((result,preds),axis=0)
+                print("--- loop_time %s seconds ---" % (time.time() - start_time))
 
 
-                    print ("test accuracy: "+str(accuracy(test_lb,result)))
+                print ("test accuracy: "+str(accuracy(test_lb,result)))
 
-                    # save_path = saver.save(sess,file_path)
-                    # print("Model saved.")
-        sess.close()       
+                save_path = saver.save(sess,file_path)
+                print("Model saved.")
+    sess.close()
 
-            # sv.stop() 
+
 
