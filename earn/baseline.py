@@ -341,8 +341,8 @@ with tf.device('/device:GPU:1'):
                 print("--- %s seconds ---" % (time.time() - start_time))
                 print(line)
 
-                temp_acc = int(accuracy(val_lb,preds))
-                if accuracy != temp_acc:
+                temp_acc = accuracy(val_lb,preds)
+                if accuracy != int(temp_acc):
                     convergence_time = time.time() - start_time
                     step = s
             #get test accuracy and save model
