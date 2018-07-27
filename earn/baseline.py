@@ -343,9 +343,9 @@ with tf.device('/device:GPU:1'):
                 print (" ")
                 print("--- %s seconds ---" % (time.time() - start_time))
                 print(line)
-
+                print(type(accuracy(val_lb,preds)))
                 temp_acc = int(accuracy(val_lb,preds))
-                if val_accuracy < temp_acc or val_accuracy > temp_acc :
+                if val_accuracy != temp_acc :
                     accuracy = temp_acc
                     convergence_time = time.time() - start_time
                     step = s
