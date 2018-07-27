@@ -291,11 +291,11 @@ use_previous = 0
 with tf.device('/device:GPU:1'):
     num_steps = 20000
 
-    config=tf.ConfigProto(log_device_placement=True)
+    #config=tf.ConfigProto(log_device_placement=True)
     # maximun alloc gpu 10% of MEM
-    config.gpu_options.per_process_gpu_memory_fraction = 0.1 
-    config.gpu_options.allow_growth = True #allocate dynamically
-    sess = tf.Session(config = config)
+    #config.gpu_options.per_process_gpu_memory_fraction = 0.1 
+    #config.gpu_options.allow_growth = True #allocate dynamically
+    #sess = tf.Session(config = config)
 
     with tf.Session(graph=graph) as sess:
 
@@ -309,6 +309,7 @@ with tf.device('/device:GPU:1'):
             print("Model restored.")
 
         #training
+        total_time =time.time()
         for s in range(num_steps):
             start_time = time.time()
 
@@ -318,9 +319,9 @@ with tf.device('/device:GPU:1'):
 
             _,loss_value = sess.run([opt,loss],feed_dict=feed_dict)
 
-            print("step",s)
-            print("--- %s seconds ---" % (time.time() - start_time))
-            print(line)
+            #print("step",s)
+            #print("--- %s seconds ---" % (time.time() - start_time))
+            #print(line)
         #     new_entry = {'time_used/sec': 'device1', 'months': 'month1'}
         #     new_df = pd.concat([new_df, "step", axis=0)
         #     new_df.loc[len(new_df)] = ['step {}'.format(s) ,(time.time() - start_time)]
@@ -356,7 +357,8 @@ with tf.device('/device:GPU:1'):
                 
                 save_path = saver.save(sess,file_path)
                 print("Model saved.")
-    sess.close()       
+        print("--- total_time %s seconds ---"% (time.time() - total_time))  
+    #sess.close()       
 
 
 
