@@ -294,9 +294,9 @@ with tf.device('/device:GPU:1'):
     num_steps = 10000
 
     # num_steps = 10000
-    convergence_time = 0
-    accuracy = 0
-    step = 0
+    # convergence_time = 0
+    # accuracy = 0
+    # step = 0
 
     #config=tf.ConfigProto(log_device_placement=True)
     # maximun alloc gpu 10% of MEM
@@ -337,7 +337,7 @@ with tf.device('/device:GPU:1'):
             if s%100 == 0:
                 feed_dict = {tf_valX : valX}
                 preds=sess.run(predictions_val,feed_dict=feed_dict)
-                val_acc  = str(accuracy(val_lb,preds))
+                val_acc  = accuracy(val_lb,preds)
                 print(type(val_acc))
                 print ("step: "+str(s))
                 print ("validation accuracy: "+str(val_acc))
