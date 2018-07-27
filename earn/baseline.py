@@ -4,7 +4,7 @@ import tensorflow as tf
 import os
 import time
 from tensorflow.examples.tutorials.mnist import input_data
-
+import math
 line = "======================================================================"
 
 
@@ -289,8 +289,15 @@ with graph.as_default():
 #set use_previous=1 to use file_path model
 #set use_previous=0 to start model from scratch
 use_previous = 0
+
 with tf.device('/device:GPU:1'):
-    num_steps = 20000
+    num_steps = 15000
+
+    # num_steps = 10000
+    convergence_time = 0
+    val_accuracy = 0
+    step = 0
+    acc_stability_count = 0
 
     #config=tf.ConfigProto(log_device_placement=True)
     # maximun alloc gpu 10% of MEM
@@ -331,12 +338,24 @@ with tf.device('/device:GPU:1'):
             if s%100 == 0:
                 feed_dict = {tf_valX : valX}
                 preds=sess.run(predictions_val,feed_dict=feed_dict)
-
+              
                 print ("step: "+str(s))
                 print ("validation accuracy: "+str(accuracy(val_lb,preds)))
                 print (" ")
                 print("--- %s seconds ---" % (time.time() - start_time))
                 print(line)
+                # print(type(accuracy(val_lb,preds)))
+                temp_acc = int(accuracy(val_lb,preds))
+                if val_accuracy != temp_acc :
+                    if acc_stability_count < 10:
+                        val_accuracy = temp_acc
+                        convergence_time = time.time() - total_time
+                        step = s
+                        acc_stability_count = 0
+                else:
+                    acc_stability_count +=1
+
+
 
             #get test accuracy and save model
             if s == (num_steps-1):
@@ -359,7 +378,12 @@ with tf.device('/device:GPU:1'):
                 # save_path = saver.save(sess,file_path)
                 # print("Model saved.")
         print("--- total_time %s seconds ---"% (time.time() - total_time))  
-    #sess.close()       
+    
+    print("Convergence time: ",convergence_time)
+    print("Step: ",step)
+    # print("--- total_time %s second ---"% (time.time() - start_time2))
+
+    sess.close()       
 
 
 
