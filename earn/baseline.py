@@ -346,7 +346,7 @@ with tf.device('/device:GPU:1'):
                 # print(type(accuracy(val_lb,preds)))
                 temp_acc = int(accuracy(val_lb,preds))
                 differ = temp_acc - val_accuracy
-                if differ != 1 or  differ != -1 :
+                if differ == 1 or differ == -1 :
                     val_accuracy = temp_acc
                     convergence_time = time.time() - total_time
                     step = s
