@@ -291,7 +291,7 @@ with graph.as_default():
 use_previous = 0
 
 with tf.device('/device:GPU:1'):
-    num_steps = 10000
+    num_steps = 15000
 
     # num_steps = 10000
     convergence_time = 0
@@ -351,6 +351,7 @@ with tf.device('/device:GPU:1'):
                         val_accuracy = temp_acc
                         convergence_time = time.time() - total_time
                         step = s
+                        acc_stability_count = 0
                 else:
                     acc_stability_count +=1
 
