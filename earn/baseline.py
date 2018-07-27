@@ -341,10 +341,7 @@ with tf.device('/device:GPU:1'):
                 print("--- %s seconds ---" % (time.time() - start_time))
                 print(line)
 
-                temp_acc = accuracy(val_lb,preds)
-                if accuracy != int(temp_acc):
-                    convergence_time = time.time() - start_time
-                    step = s
+            
             #get test accuracy and save model
             if s == (num_steps-1):
                 #create an array to store the outputs for the test
@@ -366,9 +363,6 @@ with tf.device('/device:GPU:1'):
                 # save_path = saver.save(sess,file_path)
                 # print("Model saved.")
         print("--- total_time %s seconds ---"% (time.time() - total_time))  
-        print("Convergence time: ",convergence_time)
-        print("Step: ",step)
-        print("--- total_time %s second ---"% (time.time() - start_time2))
     sess.close()       
 
 
