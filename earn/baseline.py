@@ -344,7 +344,7 @@ with tf.device('/device:GPU:1'):
                 print(line)
 
                 temp_acc = math.ceil(accuracy(val_lb,preds))
-                if accuracy != temp_acc:
+                if accuracy < temp_acc or accuracy > temp_acc :
                     accuracy = temp_acc
                     convergence_time = time.time() - start_time
                     step = s
