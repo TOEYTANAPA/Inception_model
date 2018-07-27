@@ -292,7 +292,7 @@ use_previous = 0
 
 with tf.device('/device:GPU:1'):
     num_steps = 10000
-    
+
     # num_steps = 10000
     convergence_time = 0
     accuracy = 0
@@ -337,18 +337,19 @@ with tf.device('/device:GPU:1'):
             if s%100 == 0:
                 feed_dict = {tf_valX : valX}
                 preds=sess.run(predictions_val,feed_dict=feed_dict)
-
+                val_acc  = accuracy(val_lb,preds)
+                print(type(val_acc))
                 print ("step: "+str(s))
-                print ("validation accuracy: "+str(accuracy(val_lb,preds)))
+                print ("validation accuracy: "+str(val_acc))
                 print (" ")
                 print("--- %s seconds ---" % (time.time() - start_time))
                 print(line)
 
-                temp_acc = math.ceil(accuracy(val_lb,preds))
-                if accuracy < temp_acc or accuracy > temp_acc :
-                    accuracy = temp_acc
-                    convergence_time = time.time() - start_time
-                    step = s
+                # temp_acc = math.ceil(accuracy(val_lb,preds))
+                # if accuracy < temp_acc or accuracy > temp_acc :
+                #     accuracy = temp_acc
+                #     convergence_time = time.time() - start_time
+                #     step = s
                         
 
 
