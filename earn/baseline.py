@@ -290,10 +290,6 @@ with graph.as_default():
 #set use_previous=0 to start model from scratch
 use_previous = 0
 
-num_steps = 10000
-convergence_time = 0
-accuracy = 0
-step = 0
 with tf.device('/device:GPU:1'):
     num_steps = 10000
 
