@@ -284,10 +284,7 @@ with graph.as_default():
 
 
 
-num_steps = 10000
-convergence_time = 0
-accuracy = 0
-step = 0
+
 
 #set use_previous=1 to use file_path model
 #set use_previous=0 to start model from scratch
@@ -341,7 +338,6 @@ with tf.device('/device:GPU:1'):
                 print("--- %s seconds ---" % (time.time() - start_time))
                 print(line)
 
-            
             #get test accuracy and save model
             if s == (num_steps-1):
                 #create an array to store the outputs for the test
@@ -363,7 +359,7 @@ with tf.device('/device:GPU:1'):
                 # save_path = saver.save(sess,file_path)
                 # print("Model saved.")
         print("--- total_time %s seconds ---"% (time.time() - total_time))  
-    sess.close()       
+    #sess.close()       
 
 
 
