@@ -297,6 +297,7 @@ with tf.device('/device:GPU:1'):
     convergence_time = 0
     val_accuracy = 0
     step = 0
+    acc_stability_count = 0
 
     #config=tf.ConfigProto(log_device_placement=True)
     # maximun alloc gpu 10% of MEM
@@ -345,12 +346,14 @@ with tf.device('/device:GPU:1'):
                 print(line)
                 # print(type(accuracy(val_lb,preds)))
                 temp_acc = int(accuracy(val_lb,preds))
-                differ = temp_acc - val_accuracy
-                if differ == 1 or differ == -1 :
-                    val_accuracy = temp_acc
-                    convergence_time = time.time() - total_time
-                    step = s
-                        
+                if val_accuracy != temp_acc :
+                    if acc_stability_count < 10:
+                        val_accuracy = temp_acc
+                        convergence_time = time.time() - total_time
+                        step = s
+                else:
+                    acc_stability_count +=1
+
 
 
             #get test accuracy and save model
