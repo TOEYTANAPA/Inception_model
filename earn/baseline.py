@@ -345,9 +345,10 @@ with tf.device('/device:GPU:1'):
                 print(line)
                 # print(type(accuracy(val_lb,preds)))
                 temp_acc = int(accuracy(val_lb,preds))
-                if val_accuracy != temp_acc :
+                differ = temp_acc - val_accuracy
+                if differ != 1 or  differ != -1 :
                     val_accuracy = temp_acc
-                    convergence_time = time.time() - start_time
+                    convergence_time = time.time() - total_time
                     step = s
                         
 
@@ -376,7 +377,7 @@ with tf.device('/device:GPU:1'):
     
     print("Convergence time: ",convergence_time)
     print("Step: ",step)
-    print("--- total_time %s second ---"% (time.time() - start_time2))
+    # print("--- total_time %s second ---"% (time.time() - start_time2))
 
     sess.close()       
 
