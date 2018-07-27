@@ -336,18 +336,18 @@ with tf.device('/device:GPU:1'):
             if s%100 == 0:
                 feed_dict = {tf_valX : valX}
                 preds=sess.run(predictions_val,feed_dict=feed_dict)
-                acc = accuracy(val_lb,preds)
+                
                 print ("step: "+str(s))
-                print ("validation accuracy: "+str(acc))
+                print ("validation accuracy: "+str(accuracy(val_lb,preds)))
                 print (" ")
                 print("--- %s seconds ---" % (time.time() - start_time))
                 print(line)
 
-                temp_acc = math.ceil(acc)
-                if accuracy < temp_acc or accuracy > temp_acc :
-                    accuracy = temp_acc
-                    convergence_time = time.time() - start_time
-                    step = s
+                # temp_acc = math.ceil(accuracy(val_lb,preds))
+                # if accuracy < temp_acc or accuracy > temp_acc :
+                #     accuracy = temp_acc
+                #     convergence_time = time.time() - start_time
+                #     step = s
                         
 
 
