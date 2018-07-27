@@ -9,6 +9,7 @@ line = "======================================================================"
 
 
 start_time = time.time()
+
 mnist = input_data.read_data_sets('MNIST_data', one_hot=True)
 print("--- read_data: %s seconds ---" % (time.time() - start_time))
 print(line)
@@ -35,7 +36,7 @@ trainX,valX,train_lb,val_lb=trainX[0:(len(trainX)-500),:,:,:],trainX[(len(trainX
 
 
 
-start_time = time.time()
+# start_time = time.time()
 
 #make sure the images are alright
 # plt.imshow(trainX.reshape(len(trainX),28,28)[0],cmap="Greys")
@@ -355,8 +356,8 @@ with tf.device('/device:GPU:1'):
                 
                 print ("test accuracy: "+str(accuracy(test_lb,result)))
                 
-                save_path = saver.save(sess,file_path)
-                print("Model saved.")
+                # save_path = saver.save(sess,file_path)
+                # print("Model saved.")
         print("--- total_time %s seconds ---"% (time.time() - total_time))  
     #sess.close()       
 
